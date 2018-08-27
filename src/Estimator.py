@@ -17,11 +17,13 @@ def main():
         # Build linear classifier.
     classifier = tf.estimator.LinearClassifier(feature_columns=my_feature_columns, n_classes=2,
                                                optimizer='SGD')
+    # classifier = tf.estimator.DNNClassifier(feature_columns=my_feature_columns, n_classes=2,
+    #                                            optimizer='SGD', hidden_units=[10, 10])
 
     # Train the Model.
     classifier.train(
         input_fn=lambda: DataSet.train_input_fn(train_x, train_y,
-                                                BATCH_SIZE), steps=1000)
+                                                BATCH_SIZE), steps=10000)
 
     train_predictions = classifier.predict(
         input_fn=lambda: DataSet.eval_input_fn(train_x,
@@ -66,14 +68,14 @@ def analyze_results(predictions, labels):
         elif expec <= 0 and class_id != expec:
             false_positives += 1
 
-    test_size = len(labels)
+    sample_size = len(labels)
     positive_labels = sum(labels > 0)
 
-    error_cnt = test_size - accuracy_cnt
-    accuracy = accuracy_cnt / test_size
+    error_cnt = sample_size - accuracy_cnt
+    accuracy = accuracy_cnt / sample_size
     print("%d (%.2f) right predictions.\n%d (%.2f) wrong predictions."
           % (accuracy_cnt, accuracy, error_cnt,
-             error_cnt / test_size))
+             error_cnt / sample_size))
 
     precision = 0 if true_positives + false_positives == 0 else (
         float(true_positives) / (true_positives + false_positives))
