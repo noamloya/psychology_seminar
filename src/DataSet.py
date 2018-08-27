@@ -6,8 +6,6 @@ import math
 CSV_COLUMN_NAMES = ['Tas', 'Stai',
                     'Stroop', 'Adap',
                     'RestEFP', 'SuccessIndex']
-CSV_COLUMN_NAMES = ['Stroop',
-                    'RestEFP', 'SuccessIndex']
 SUCCESS_INDEX = [0, 1]  # defined by wilc test
 TEST_PERCENT = 0.2
 
