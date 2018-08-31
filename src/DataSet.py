@@ -3,10 +3,8 @@ import tensorflow as tf
 import random
 import math
 
-CSV_COLUMN_NAMES = ['Tas', 'Stai',
-                    'Stroop', 'Adap',
-                    'RestEFP', 'SuccessIndex']
-SUCCESS_INDEX = [0, 1]  # defined by wilc test
+CSV_COLUMN_NAMES = ['Tas', 'Stai', 'SuccessIndex']
+SUCCESS_INDEX = [0, 1]  # defined by 65 percentile of S MIN
 TEST_PERCENT = 0.2
 
 

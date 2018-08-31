@@ -4,45 +4,52 @@ import tensorflow as tf
 DATA_PATH = '../resources/AllResults.xls'
 BATCH_SIZE = 128
 
-
 def main():
-    # Fetch the data
-    (train_x, train_y), (test_x, test_y) = DataSet.load_data(DATA_PATH)
+    train_sum = 0
+    test_sum = 0
+    iters = 10
+    for k in range(0, iters):
+        # Fetch the data
+        (train_x, train_y), (test_x, test_y) = src.DataSet.load_data(DATA_PATH)
 
-    # Feature columns describe how to use the input.
-    my_feature_columns = []
-    for key in train_x.keys():
-        my_feature_columns.append(tf.feature_column.numeric_column(key=key))
+        # Feature columns describe how to use the input.
+        my_feature_columns = []
+        for key in train_x.keys():
+            my_feature_columns.append(tf.feature_column.numeric_column(key=key))
 
         # Build linear classifier.
-    classifier = tf.estimator.LinearClassifier(feature_columns=my_feature_columns, n_classes=2,
-                                               optimizer='SGD')
-    # classifier = tf.estimator.DNNClassifier(feature_columns=my_feature_columns, n_classes=2,
-    #                                            optimizer='SGD', hidden_units=[10, 10])
+        classifier = tf.estimator.LinearClassifier(feature_columns=my_feature_columns, n_classes=2,
+                                                   optimizer='SGD') # Adam, ftrl
+        # classifier = tf.estimator.DNNClassifier(feature_columns=my_feature_columns, n_classes=2,
+        #                                            optimizer='SGD', hidden_units=[10, 10])
 
-    # Train the Model.
-    classifier.train(
-        input_fn=lambda: DataSet.train_input_fn(train_x, train_y,
-                                                BATCH_SIZE), steps=10000)
+        # Train the Model.
+        classifier.train(
+            input_fn=lambda: src.DataSet.train_input_fn(train_x, train_y,
+                                                    BATCH_SIZE), steps=10000)
 
-    train_predictions = classifier.predict(
-        input_fn=lambda: DataSet.eval_input_fn(train_x,
-                                               labels=None,
-                                               batch_size=BATCH_SIZE))
+        train_predictions = classifier.predict(
+            input_fn=lambda: src.DataSet.eval_input_fn(train_x,
+                                                   labels=None,
+                                                   batch_size=BATCH_SIZE))
 
-    print("Results on Training Data:")
-    analyze_results(train_predictions, train_y)
+        print("Results on Training Data:")
+        train_sum += analyze_results(train_predictions, train_y)
 
-    # Generate predictions from the model
-    predictions = classifier.predict(
-        input_fn=lambda: DataSet.eval_input_fn(test_x,
-                                               labels=None,
-                                               batch_size=BATCH_SIZE))
+        # Generate predictions from the model
+        predictions = classifier.predict(
+            input_fn=lambda: src.DataSet.eval_input_fn(test_x,
+                                                   labels=None,
+                                                   batch_size=BATCH_SIZE))
 
-    print("Results on Test Data:")
-    analyze_results(predictions, test_y)
-    # template = 'Prediction is "{}" ({:.1f}%), expected "{}"\n'
-    #
+        print("Results on Test Data:")
+        test_sum += analyze_results(predictions, test_y)
+        # template = 'Prediction is "{}" ({:.1f}%), expected "{}"\n'
+        #
+    print("train_sum:", train_sum, "iters:", iters)
+
+    print("Training Data- Mean Accuracy: %f\n Test data- Mean accuracy: %f" %
+          (float(train_sum)/float(iters), float(test_sum)/float(iters)))
 
 
 def class_to_string(label):
@@ -82,6 +89,7 @@ def analyze_results(predictions, labels):
     recall = float(true_positives) / positive_labels
 
     print("Accuracy %.2f, Precision: %.2f, Recall %.2f" % (accuracy, precision, recall))
+    return accuracy
 
 
 if __name__ == '__main__':
