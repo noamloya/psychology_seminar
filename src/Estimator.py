@@ -1,4 +1,4 @@
-import src.DataSet as DataSet
+import src.DataSet
 import tensorflow as tf
 
 DATA_PATH = '../resources/AllResults.xls'
