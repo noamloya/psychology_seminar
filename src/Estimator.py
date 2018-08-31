@@ -1,4 +1,4 @@
-import DataSet
+import src.DataSet as DataSet
 import tensorflow as tf
 
 DATA_PATH = '../resources/AllResults.xls'
@@ -14,16 +14,27 @@ def main():
     for key in train_x.keys():
         my_feature_columns.append(tf.feature_column.numeric_column(key=key))
 
-        # Build linear classifier.
+    # Build linear classifier.
+
+    # --- List of possible classifiers.
+
+    # This could be used with the default optimizer, 'Adam' or 'Adagrad'.
     classifier = tf.estimator.LinearClassifier(feature_columns=my_feature_columns, n_classes=2,
                                                optimizer='SGD')
+
+    # This could be used with various initial learning rates: if one isn't good enough, we can divide it by 10.
+    global_step_tensor = tf.Variable(0, trainable=False, name='global_step')
+    classifier = tf.estimator.LinearClassifier(feature_columns=my_feature_columns, n_classes=2,
+                                               optimizer=tf.train.GradientDescentOptimizer(
+                                                   learning_rate=0.01))
+    # THIS ISN'T A GOOD IDEA
     # classifier = tf.estimator.DNNClassifier(feature_columns=my_feature_columns, n_classes=2,
-    #                                            optimizer='SGD', hidden_units=[10, 10])
+    #                                         optimizer='SGD', hidden_units=[3], activation_fn=tf.nn.sigmoid)
 
     # Train the Model.
     classifier.train(
         input_fn=lambda: DataSet.train_input_fn(train_x, train_y,
-                                                BATCH_SIZE), steps=10000)
+                                                BATCH_SIZE), steps=1000)
 
     train_predictions = classifier.predict(
         input_fn=lambda: DataSet.eval_input_fn(train_x,
@@ -57,9 +68,11 @@ def analyze_results(predictions, labels):
     true_positives = 0
     false_positives = 0
 
+    prediction_vector = []
+
     for pred_dict, expec in zip(predictions, labels):
         class_id = pred_dict['class_ids'][0]
-
+        prediction_vector.append(class_id)
         if class_id == expec:
             accuracy_cnt += 1
 
@@ -68,20 +81,22 @@ def analyze_results(predictions, labels):
         elif expec <= 0 and class_id != expec:
             false_positives += 1
 
-    sample_size = len(labels)
+    test_size = len(labels)
     positive_labels = sum(labels > 0)
 
-    error_cnt = sample_size - accuracy_cnt
-    accuracy = accuracy_cnt / sample_size
+    error_cnt = test_size - accuracy_cnt
+    accuracy = accuracy_cnt / test_size
     print("%d (%.2f) right predictions.\n%d (%.2f) wrong predictions."
           % (accuracy_cnt, accuracy, error_cnt,
-             error_cnt / sample_size))
+             error_cnt / test_size))
 
     precision = 0 if true_positives + false_positives == 0 else (
         float(true_positives) / (true_positives + false_positives))
     recall = float(true_positives) / positive_labels
 
     print("Accuracy %.2f, Precision: %.2f, Recall %.2f" % (accuracy, precision, recall))
+
+    print("PREDICTIONS:", prediction_vector)
 
 
 if __name__ == '__main__':
