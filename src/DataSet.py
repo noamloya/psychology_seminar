@@ -16,8 +16,9 @@ def load_data(data_path, y_name='SuccessIndex'):
     sample_size = file_obj.shape[0]
     test_lines = select_test_set(sample_size)
     test = file_obj.iloc[test_lines, :]
-    test_x, test_y = test, test.pop(y_name)
 
+    test_x, test_y = test, test.pop(y_name)
+    print("after random split: number of success(1) labels is: %d out of %d\n" % (sum(test_y), len(test_y)))
     train = file_obj.drop(test_lines, axis=0)
     train_x, train_y = train, train.pop(y_name)
     return (train_x, train_y), (test_x, test_y)
@@ -35,8 +36,9 @@ def train_input_fn(features, labels, batch_size):
     data_set = tf.data.Dataset.from_tensor_slices((dict(features), labels))
 
     # Shuffle, repeat, and batch the examples.
-    return data_set.shuffle(1000).repeat().batch(batch_size)
-
+    data_set = data_set.shuffle(1000).repeat().batch(batch_size)
+    return data_set
+#
 
 def eval_input_fn(features, labels, batch_size):
     """An input function for evaluation or prediction"""
