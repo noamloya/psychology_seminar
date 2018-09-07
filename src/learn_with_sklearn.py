@@ -1,30 +1,65 @@
-import src.DataSet as DataSet
+import DataSet as DataSet
 import numpy as np
 import sklearn.linear_model as lin
+from sklearn import metrics
+import matplotlib.pyplot as plt
+import itertools
+from sklearn.ensemble import RandomForestRegressor
 
 DATA_PATH = '../resources/AllResults.xls'
 BATCH_SIZE = 128
+NUM_ITERATIONS = 1
+is_stratified_sampling = True
 
-def main():
-    train_sum = 0
-    test_sum = 0
-    iters = 5
-    steps_arg = 10000
-    is_stratified_sampling = True
+def plot_confusion_matrix(cm, classes,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+
+
+def run_and_evaluate_model(model, model_name, iters, is_stratified_sampling):
     test_accs, test_prcs, test_recs = [], [], []
     train_accs, train_prcs, train_recs = [], [], []
-    for k in range(0, iters):
+    for k in range(iters):
         # Fetch the data
         (train_x, train_y), (test_x, test_y) = DataSet.load_data(DATA_PATH, is_stratified_sampling=is_stratified_sampling)
 
-        classifier = lin.LinearRegression()
+        classifier = model
+
         # Train the Model
         classifier.fit(train_x, train_y)
 
         print("Training score:", classifier.score(train_x, train_y))
         train_predictions = classifier.predict(train_x)
         print("Results on Training Data:")
-        train_acc, train_prc, train_rec = analyze_results(train_predictions, train_y)
+        train_acc, train_prc, train_rec = analyze_results(train_predictions, train_y, model_name + '_train')
         train_accs.append(train_acc)
         train_prcs.append(train_prc)
         train_recs.append(train_rec)
@@ -34,7 +69,7 @@ def main():
         predictions = classifier.predict(test_x)
 
         print("Results on Test Data:")
-        test_acc, test_prc, test_rec = analyze_results(predictions, test_y)
+        test_acc, test_prc, test_rec = analyze_results(predictions, test_y, model_name + '_test')
         test_accs.append(test_acc)
         test_prcs.append(test_prc)
         test_recs.append(test_rec)
@@ -48,8 +83,6 @@ def main():
     test_recs = np.array(test_recs)
 
     print("=== Summary ===")
-    print("%d iterations" % iters)
-    print("%d steps per training" % steps_arg)
     print("Training Data- Accuracy: Average: %f, Std: %f" % (np.mean(train_accs), np.std(train_accs)))
     print("Training Data- Precision: Average: %f, Std: %f" % (np.mean(train_prcs), np.std(train_prcs)))
     print("Training Data- Recall: Average: %f, Std: %f" % (np.mean(train_recs), np.std(train_recs)))
@@ -58,6 +91,18 @@ def main():
     print("Test Data- Recall: Average: %f, Std: %f" % (np.mean(test_recs), np.std(test_recs)))
 
 
+def main():
+    models = {
+        'Linear Regression': lin.LinearRegression(),
+        'Ridge Regression': lin.Ridge(),
+        'Logistic Regression': lin.LogisticRegression(),
+        'Random Forest':  RandomForestRegressor(n_jobs=-1, n_estimators=100),
+        'Random Forest Limited Depth': RandomForestRegressor(n_jobs=-1, n_estimators=10, max_depth=2),
+    }
+
+    for model_name in models:
+        print("======== Model: %s ========" % model_name)
+        run_and_evaluate_model(models[model_name], model_name, NUM_ITERATIONS, is_stratified_sampling)
 
 
 def class_to_string(label):
@@ -67,13 +112,8 @@ def class_to_string(label):
         return "Fail"
 
 
-def analyze_results(predictions, labels):
+def analyze_results(predictions, labels, fig_name):
     predictions = np.round(predictions)
-    accuracy_cnt = 0
-    true_positives = 0
-    false_positives = 0
-
-    prediction_vector = []
 
     accuracy_cnt = np.sum(predictions == labels)
     true_positives = np.sum((predictions - labels) > 0)
@@ -90,9 +130,18 @@ def analyze_results(predictions, labels):
 
     print("Accuracy %.2f, Precision: %.2f, Recall %.2f" % (accuracy, precision, recall))
 
-    # ("PREDICTIONS:", prediction_vector)
+    cnf_matrix = metrics.confusion_matrix(labels, predictions)
+    np.set_printoptions(precision=2)
 
+    # Plot non-normalized confusion matrix
+    fig = plt.figure()
+    plot_confusion_matrix(cnf_matrix, classes=['Unsuccessful', 'Successful'],
+                          title='Confusion matrix, without normalization')
+    fig.savefig('./Confustion_matrix_%s.jpg' % fig_name)
+    fig.clf()
     return accuracy, precision, recall
+
+
 
 
 if __name__ == '__main__':
