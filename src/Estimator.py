@@ -7,11 +7,12 @@ BATCH_SIZE = 128
 def main():
     train_sum = 0
     test_sum = 0
-    iters = 10
-    steps_arg = 100000
+    iters = 5
+    steps_arg = 1000
+    is_stratified_sampling = True
     for k in range(0, iters):
         # Fetch the data
-        (train_x, train_y), (test_x, test_y) = DataSet.load_data(DATA_PATH)
+        (train_x, train_y), (test_x, test_y) = DataSet.load_data(DATA_PATH, is_stratified_sampling=is_stratified_sampling)
 
         # Feature columns describe how to use the input.
         my_feature_columns = []
