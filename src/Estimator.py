@@ -1,5 +1,6 @@
 import src.DataSet as DataSet
 import tensorflow as tf
+import numpy as np
 
 DATA_PATH = '../resources/AllResults.xls'
 BATCH_SIZE = 128
@@ -10,6 +11,8 @@ def main():
     iters = 5
     steps_arg = 1000
     is_stratified_sampling = True
+    test_accs, test_prcs, test_recs = [], [], []
+    train_accs, train_prcs, train_recs = [], [], []
     for k in range(0, iters):
         # Fetch the data
         (train_x, train_y), (test_x, test_y) = DataSet.load_data(DATA_PATH, is_stratified_sampling=is_stratified_sampling)
@@ -46,7 +49,11 @@ def main():
                                                    labels=None,
                                                    batch_size=BATCH_SIZE))
         print("Results on Training Data:")
-        train_sum += analyze_results(train_predictions, train_y)
+        train_acc, train_prc, train_rec = analyze_results(train_predictions, train_y)
+        train_accs.append(train_acc)
+        train_prcs.append(train_prc)
+        train_recs.append(train_rec)
+
 
         # Generate predictions from the model
         predictions = classifier.predict(
@@ -55,14 +62,30 @@ def main():
                                                    batch_size=BATCH_SIZE))
 
         print("Results on Test Data:")
-        test_sum += analyze_results(predictions, test_y)
+        test_acc, test_prc, test_rec = analyze_results(predictions, test_y)
+        test_accs.append(test_acc)
+        test_prcs.append(test_prc)
+        test_recs.append(test_rec)
         # template = 'Prediction is "{}" ({:.1f}%), expected "{}"\n'
 
-    print("=== Summary ===\n"
-          "%d iterations\n%d steps per training\n"
-          "Training Data- Average accuracy: %f"
-          "\nTest data- Average accuracy: %f" %
-          (iters, steps_arg, train_sum/iters, test_sum/iters))
+    train_accs = np.array(train_accs)
+    train_prcs = np.array(train_prcs)
+    train_recs = np.array(train_recs)
+    test_accs = np.array(test_accs)
+    test_prcs = np.array(test_prcs)
+    test_recs = np.array(test_recs)
+
+    print("=== Summary ===")
+    print("%d iterations" % iters)
+    print("%d steps per training" % steps_arg)
+    print("Training Data- Accuracy: Average: %f, Std: %f" % (np.mean(train_accs), np.std(train_accs)))
+    print("Training Data- Precision: Average: %f, Std: %f" % (np.mean(train_prcs), np.std(train_prcs)))
+    print("Training Data- Recall: Average: %f, Std: %f" % (np.mean(train_recs), np.std(train_recs)))
+    print("Test Data- Accuracy: Average: %f, Std: %f" % (np.mean(test_accs), np.std(test_accs)))
+    print("Test Data- Precision: Average: %f, Std: %f" % (np.mean(test_prcs), np.std(test_prcs)))
+    print("Test Data- Recall: Average: %f, Std: %f" % (np.mean(test_recs), np.std(test_recs)))
+    
+            
 
 
 def class_to_string(label):
@@ -107,7 +130,7 @@ def analyze_results(predictions, labels):
 
     # ("PREDICTIONS:", prediction_vector)
 
-    return accuracy
+    return accuracy, precision, recall
 
 
 if __name__ == '__main__':
