@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestRegressor
 
 DATA_PATH = '../resources/AllResults.xls'
 BATCH_SIZE = 128
-NUM_ITERATIONS = 1
+NUM_ITERATIONS = 10
 is_stratified_sampling = True
 
 def plot_confusion_matrix(cm, classes,
@@ -58,7 +58,7 @@ def run_and_evaluate_model(model, model_name, iters, is_stratified_sampling):
 
         print("Training score:", classifier.score(train_x, train_y))
         train_predictions = classifier.predict(train_x)
-        print("Results on Training Data:")
+        # print("Results on Training Data:")
         train_acc, train_prc, train_rec = analyze_results(train_predictions, train_y, model_name + '_train')
         train_accs.append(train_acc)
         train_prcs.append(train_prc)
@@ -68,7 +68,7 @@ def run_and_evaluate_model(model, model_name, iters, is_stratified_sampling):
         # Generate predictions from the model
         predictions = classifier.predict(test_x)
 
-        print("Results on Test Data:")
+        # print("Results on Test Data:")
         test_acc, test_prc, test_rec = analyze_results(predictions, test_y, model_name + '_test')
         test_accs.append(test_acc)
         test_prcs.append(test_prc)
@@ -128,17 +128,18 @@ def analyze_results(predictions, labels, fig_name):
         float(true_positives) / (true_positives + false_positives))
     recall = float(true_positives) / positive_labels
 
-    print("Accuracy %.2f, Precision: %.2f, Recall %.2f" % (accuracy, precision, recall))
+    # print("Accuracy %.2f, Precision: %.2f, Recall %.2f" % (accuracy, precision, recall))
 
     cnf_matrix = metrics.confusion_matrix(labels, predictions)
     np.set_printoptions(precision=2)
 
     # Plot non-normalized confusion matrix
-    fig = plt.figure()
-    plot_confusion_matrix(cnf_matrix, classes=['Unsuccessful', 'Successful'],
-                          title='Confusion matrix, without normalization')
-    fig.savefig('./Confustion_matrix_%s.jpg' % fig_name)
-    fig.clf()
+    if NUM_ITERATIONS == 1:
+        fig = plt.figure()
+        plot_confusion_matrix(cnf_matrix, classes=['Unsuccessful', 'Successful'],
+                              title='Confusion matrix, without normalization')
+        fig.savefig('./Confustion_matrix_%s.jpg' % fig_name)
+        fig.clf()
     return accuracy, precision, recall
 
 
