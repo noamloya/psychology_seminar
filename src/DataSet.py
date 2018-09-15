@@ -3,29 +3,29 @@ import tensorflow as tf
 import random
 import math
 
-CSV_COLUMN_NAMES = ['Tas', 'Stai', 'Stroop', 'Adap', 'RestEFP', 'SuccessIndex']
+CSV_COLUMN_NAMES = ['Tas', 'Stai', 'Stroop', 'Adap', 'S_Min']
 SUCCESS_INDEX = [0, 1]  # defined by 65 percentile of S MIN
 TEST_PERCENT = 0.2
 
 
-def load_data(data_path, y_name='SuccessIndex', is_stratified_sampling=False):
+def load_data(data_path, y_name='S_Min', is_stratified_sampling=False):
     """Given a dataset file path, splits the data randomly into training set and testing set.
     :returns Returns the data set as (train_x, train_y), (test_x, test_y)."""
 
     file_obj = pd.read_excel(data_path, names=CSV_COLUMN_NAMES, header=0)
 
     train, test = create_train_and_test(file_obj, y_name, is_stratified_sampling)
-
-
     test_x, test_y = test, test.pop(y_name)
     train_x, train_y = train, train.pop(y_name)
-    print("after random split: number of success(1) in test labels is: %d out of %d\n" % (sum(test_y), len(test_y)))
-    print("after random split: number of success(1) in train labels is: %d out of %d\n" % (sum(train_y), len(train_y)))
+    # print("after random split: number of success(1) in test labels is: %d out of %d\n" % (sum(test_y), len(test_y)))
+    # print("after random split: number of success(1) in train labels is: %d out of %d\n" % (sum(train_y), len(train_y)))
 
     return (train_x, train_y), (test_x, test_y)
 
+
 def get_test_size(sample_size):
     return math.ceil(sample_size * TEST_PERCENT)
+
 
 def create_train_and_test(file_obj, label_name, is_stratified_sampling):
     if is_stratified_sampling:
@@ -58,7 +58,7 @@ def train_input_fn(features, labels, batch_size):
     # Shuffle, repeat, and batch the examples.
     data_set = data_set.shuffle(1000).repeat().batch(batch_size)
     return data_set
-#
+
 
 def eval_input_fn(features, labels, batch_size):
     """An input function for evaluation or prediction"""

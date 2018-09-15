@@ -1,4 +1,4 @@
-import DataSet as DataSet
+import DataSet
 import numpy as np
 import sklearn.linear_model as lin
 from sklearn import metrics
@@ -6,10 +6,11 @@ import matplotlib.pyplot as plt
 import itertools
 from sklearn.ensemble import RandomForestRegressor
 
-DATA_PATH = '../resources/AllResults.xls'
+DATA_PATH = '../resources/Smin_v02.xls'
 BATCH_SIZE = 128
 NUM_ITERATIONS = 10
 is_stratified_sampling = True
+
 
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
@@ -55,15 +56,14 @@ def run_and_evaluate_model(model, model_name, iters, is_stratified_sampling):
 
         # Train the Model
         classifier.fit(train_x, train_y)
-
         print("Training score:", classifier.score(train_x, train_y))
+
         train_predictions = classifier.predict(train_x)
         # print("Results on Training Data:")
         train_acc, train_prc, train_rec = analyze_results(train_predictions, train_y, model_name + '_train')
         train_accs.append(train_acc)
         train_prcs.append(train_prc)
         train_recs.append(train_rec)
-
 
         # Generate predictions from the model
         predictions = classifier.predict(test_x)
@@ -92,12 +92,15 @@ def run_and_evaluate_model(model, model_name, iters, is_stratified_sampling):
 
 
 def main():
+    print('=====================================')
+    print(DataSet.CSV_COLUMN_NAMES)
+    print('=====================================')
     models = {
-        'Linear Regression': lin.LinearRegression(),
-        'Ridge Regression': lin.Ridge(),
-        'Logistic Regression': lin.LogisticRegression(),
+        # 'Linear Regression': lin.LinearRegression(),
+        # 'Ridge Regression': lin.Ridge(),
+        # 'Logistic Regression': lin.LogisticRegression(),
         'Random Forest':  RandomForestRegressor(n_jobs=-1, n_estimators=100),
-        'Random Forest Limited Depth': RandomForestRegressor(n_jobs=-1, n_estimators=10, max_depth=2),
+        # 'Random Forest Limited Depth': RandomForestRegressor(n_jobs=-1, n_estimators=10, max_depth=2),
     }
 
     for model_name in models:
@@ -141,8 +144,6 @@ def analyze_results(predictions, labels, fig_name):
         fig.savefig('./Confustion_matrix_%s.jpg' % fig_name)
         fig.clf()
     return accuracy, precision, recall
-
-
 
 
 if __name__ == '__main__':
