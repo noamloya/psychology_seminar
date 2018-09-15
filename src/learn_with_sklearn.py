@@ -1,14 +1,14 @@
 import DataSet as DataSet
 import numpy as np
 import sklearn.linear_model as lin
-from sklearn import metrics
+from sklearn import metrics, svm
 import matplotlib.pyplot as plt
 import itertools
 from sklearn.ensemble import RandomForestRegressor
 
 DATA_PATH = '../resources/AllResults.xls'
 BATCH_SIZE = 128
-NUM_ITERATIONS = 10
+NUM_ITERATIONS = 1
 is_stratified_sampling = True
 
 def plot_confusion_matrix(cm, classes,
@@ -74,7 +74,6 @@ def run_and_evaluate_model(model, model_name, iters, is_stratified_sampling):
         test_prcs.append(test_prc)
         test_recs.append(test_rec)
         # template = 'Prediction is "{}" ({:.1f}%), expected "{}"\n'
-
     train_accs = np.array(train_accs)
     train_prcs = np.array(train_prcs)
     train_recs = np.array(train_recs)
@@ -96,6 +95,8 @@ def main():
         'Linear Regression': lin.LinearRegression(),
         'Ridge Regression': lin.Ridge(),
         'Logistic Regression': lin.LogisticRegression(),
+        'Linear SVM': svm.LinearSVC(),
+        'SVM With RBF Kernel': svm.SVC(),
         'Random Forest':  RandomForestRegressor(n_jobs=-1, n_estimators=100),
         'Random Forest Limited Depth': RandomForestRegressor(n_jobs=-1, n_estimators=10, max_depth=2),
     }
@@ -114,10 +115,9 @@ def class_to_string(label):
 
 def analyze_results(predictions, labels, fig_name):
     predictions = np.round(predictions)
-
     accuracy_cnt = np.sum(predictions == labels)
-    true_positives = np.sum((predictions - labels) > 0)
-    false_positives = np.sum(1 - np.absolute(predictions != labels))
+    true_positives = np.sum(np.logical_and(predictions == 1, labels == 1))
+    false_positives = np.sum(np.sum(np.logical_and(predictions == 1, labels == 0)))
 
     test_size = len(labels)
     positive_labels = sum(labels > 0)
@@ -137,7 +137,7 @@ def analyze_results(predictions, labels, fig_name):
     if NUM_ITERATIONS == 1:
         fig = plt.figure()
         plot_confusion_matrix(cnf_matrix, classes=['Unsuccessful', 'Successful'],
-                              title='Confusion matrix, without normalization')
+                              title='Confusion matrix, Normalized', normalize=True)
         fig.savefig('./Confustion_matrix_%s.jpg' % fig_name)
         fig.clf()
     return accuracy, precision, recall
